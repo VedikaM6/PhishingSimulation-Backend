@@ -7,6 +7,7 @@ import (
 	"example.com/m/src/db"
 	"example.com/m/src/emails"
 	"example.com/m/src/users"
+	"example.com/m/src/util"
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +20,7 @@ func init() {
 
 	// Attack routes
 	router.HandleFunc("/emails", emails.ListAttacks).Methods(http.MethodGet)
-	//router.HandleFunc("/emails/{emailId}", emails.GetAttackEmail).Methods(http.MethodGet)
+	router.HandleFunc("/emails/{"+util.URLParameterEmailId+"}", emails.GetAttackEmail).Methods(http.MethodGet)
 }
 
 func main() {

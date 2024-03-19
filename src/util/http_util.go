@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+const (
+	URLParameterEmailId = "emailId"
+)
+
 func JsonResponse(w http.ResponseWriter, data interface{}, statCode int) {
 	// marshal the data
 	dataMarsh, err := json.Marshal(data)

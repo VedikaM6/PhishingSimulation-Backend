@@ -14,6 +14,7 @@ var router *mux.Router = mux.NewRouter()
 func init() {
 	// User routes
 	router.HandleFunc("/users", users.ListUsers).Methods(http.MethodGet)
+	router.HandleFunc("/user", users.AddUser).Methods(http.MethodPut)
 
 	// Attack routes
 }

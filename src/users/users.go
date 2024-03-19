@@ -43,7 +43,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("[ListUsers][DEBUG] Successfully got %d users!", len(allUsers))
+	fmt.Printf("[ListUsers][DEBUG] Successfully got %d users!\n", len(allUsers))
 
 	// return the retrieved users
 	respData := make(map[string][]UserObj)

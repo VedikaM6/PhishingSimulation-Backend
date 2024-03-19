@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"example.com/m/src/db"
+	"example.com/m/src/emails"
 	"example.com/m/src/users"
 	"github.com/gorilla/mux"
 )
@@ -17,6 +18,8 @@ func init() {
 	router.HandleFunc("/user", users.AddUser).Methods(http.MethodPut)
 
 	// Attack routes
+	router.HandleFunc("/emails", emails.ListAttacks).Methods(http.MethodGet)
+	//router.HandleFunc("/emails/{emailId}", emails.GetAttackEmail).Methods(http.MethodGet)
 }
 
 func main() {

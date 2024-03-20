@@ -12,10 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func ListAttacks(w http.ResponseWriter, r *http.Request) {
+func ListEmails(w http.ResponseWriter, r *http.Request) {
 	cli := db.GetClient()
 	if cli == nil {
-		fmt.Println("[ListAttacks] Failed to connect to DB")
+		fmt.Println("[ListEmails] Failed to connect to DB")
 		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
 		return
 	}
@@ -27,7 +27,7 @@ func ListAttacks(w http.ResponseWriter, r *http.Request) {
 	ctx := context.TODO()
 	cur, err := attackEmailsColl.Find(ctx, bson.D{})
 	if err != nil {
-		fmt.Printf("[ListAttacks] Failed to get emails from DB: %+v\n", err)
+		fmt.Printf("[ListEmails] Failed to get emails from DB: %+v\n", err)
 		util.JsonResponse(w, "Failed to get emails", http.StatusBadGateway)
 		return
 	}
@@ -38,12 +38,12 @@ func ListAttacks(w http.ResponseWriter, r *http.Request) {
 	allAttackEmails := make([]AttackEmailObj, 0)
 	err = cur.All(ctx, &allAttackEmails)
 	if err != nil {
-		fmt.Printf("[ListAttacks] Failed to decode results: %+v\n", err)
+		fmt.Printf("[ListEmails] Failed to decode results: %+v\n", err)
 		util.JsonResponse(w, "Failed to get users", http.StatusBadGateway)
 		return
 	}
 
-	fmt.Printf("[ListAttacks][DEBUG] Successfully got %d emails!\n", len(allAttackEmails))
+	fmt.Printf("[ListEmails][DEBUG] Successfully got %d emails!\n", len(allAttackEmails))
 
 	// return the retrieved users
 	respData := make(map[string][]AttackEmailObj)

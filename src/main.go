@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"example.com/m/src/attacks"
 	"example.com/m/src/db"
 	"example.com/m/src/emails"
 	"example.com/m/src/users"
@@ -23,7 +24,7 @@ func init() {
 	router.HandleFunc("/emails/{"+util.URLParameterEmailId+"}", emails.GetAttackEmail).Methods(http.MethodGet)
 
 	// Attack routes
-	router.HandleFunc("/triggerAttack", attacks.TriggerAttacks).Methods(http.MethodPOST)
+	router.HandleFunc("/triggerAttack", attacks.TriggerAttacks).Methods(http.MethodPost)
 }
 
 func main() {

@@ -11,9 +11,11 @@ import (
 const (
 	VedikaCorpDatabase = "Vedika_Corp"
 
-	MailboxesCollection    = "Mailboxes"
-	UsersCollection        = "Users"
-	AttackEmailsCollection = "AttackEmails"
+	MailboxesCollection      = "Mailboxes"
+	UsersCollection          = "Users"
+	AttackEmailsCollection   = "AttackEmails"
+	AttackLogCollection      = "AttackLog"
+	PendingAttacksCollection = "PendingAttacks"
 )
 
 var client *mongo.Client

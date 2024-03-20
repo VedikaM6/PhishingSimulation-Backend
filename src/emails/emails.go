@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func ListEmails(w http.ResponseWriter, r *http.Request) {
@@ -81,17 +82,15 @@ func GetAttackEmail(w http.ResponseWriter, r *http.Request) {
 	// get a handle for the AttackEmails collection
 	attackEmailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackEmailsCollection)
 
-	// set the query filter to match the email
-	filter := bson.D{
-		{Key: "_id", Value: objId},
-	}
-
-	ctx := context.TODO()
-	var email AttackEmailObj
-	err = attackEmailsColl.FindOne(ctx, filter).Decode(&email)
+	// get the email from the database
+	email, err := GetEmailById(attackEmailsColl, objId)
 	if err != nil {
-		fmt.Printf("[GetAttackEmail] Failed to get email from DB: %+v\n", err)
-		util.JsonResponse(w, "Failed to get emails", http.StatusBadGateway)
+		fmt.Printf("[GetAttackEmail] Failed to get email: %+v\n", err)
+		if err == mongo.ErrNoDocuments {
+			util.JsonResponse(w, "The specified email was not found", http.StatusNotFound)
+		} else {
+			util.JsonResponse(w, "Failed to get email", http.StatusBadGateway)
+		}
 		return
 	}
 

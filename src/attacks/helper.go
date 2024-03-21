@@ -48,13 +48,20 @@ func executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl *mongo.Co
 			ClickTime:    time.Time{},
 		},
 	}
-	log.LogAttack(attackLogColl)
+	_, err = log.LogAttack(attackLogColl)
+	if err != nil {
+		fmt.Printf("[executeAttack] Failed to log attack '%s': %+v\n", pendAttack.ObjId.Hex(), err)
+		return err
+	}
 
 	// remove the document from the PendingAttacks collection because it has been processed
 	res, err := deletePendingAttack(pendingAttacksColl, pendAttack.ObjId)
 	if err != nil {
 		fmt.Printf("[executeAttack] Failed to remove document '%s': %+v\n", pendAttack.ObjId.Hex(), err)
+		return err
 	} else {
 		fmt.Printf("[executeAttack] Successfully removed document: %d\n", res.DeletedCount)
 	}
+
+	return nil
 }

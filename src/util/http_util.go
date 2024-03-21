@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	URLParameterEmailId = "emailId"
+	URLParameterEmailId        = "emailId"
+	URLQueryParameterStartTime = "startTime"
+	URLQueryParameterEndTime   = "endTime"
 )
 
 func JsonResponse(w http.ResponseWriter, data interface{}, statCode int) {

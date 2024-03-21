@@ -12,7 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// This function is called when we want to check for any scheduled attacks.
+// This function is called when we want to check for any scheduled attacks and trigger them (if they are due).
+// It should be invoked routinely.
 func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 	cli := db.GetClient()
 	if cli == nil {
@@ -98,4 +99,85 @@ func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
+}
+
+func ListPreviousAttacks(w http.ResponseWriter, r *http.Request) {
+	// get the start and end times to search the history from the URL parameters
+	startTimeStr := r.URL.Query().Get(util.URLQueryParameterStartTime)
+	endTimeStr := r.URL.Query().Get(util.URLQueryParameterEndTime)
+
+	// check if the strings are non-empty
+	if startTimeStr == "" || endTimeStr == "" {
+		// One of the times is missing
+		fmt.Printf("[ListPreviousAttacks] The start or end time is missing: %s | %s\n", startTimeStr, endTimeStr)
+		util.JsonResponse(w, "URL query parameters are missing", http.StatusBadRequest)
+		return
+	}
+
+	// convert the time strings to time.Time values
+	startTime, err := time.Parse(time.RFC3339, startTimeStr)
+	if err != nil {
+		fmt.Printf("[ListPreviousAttacks] The start time is invalid: %s | %+v\n", startTimeStr, err)
+		util.JsonResponse(w, "Failed to parse startTime", http.StatusBadRequest)
+		return
+	}
+	endTime, err := time.Parse(time.RFC3339, endTimeStr)
+	if err != nil {
+		fmt.Printf("[ListPreviousAttacks] The end time is invalid: %s | %+v\n", endTimeStr, err)
+		util.JsonResponse(w, "Failed to parse endTime", http.StatusBadRequest)
+		return
+	}
+
+	// validate times
+	if !startTime.Before(endTime) {
+		// The start time is on or after the end time.
+		fmt.Printf("[ListPreviousAttacks] The start time must be before the end time: %s | %s\n", startTimeStr, endTimeStr)
+		util.JsonResponse(w, "The start time must be before the end time.", http.StatusBadRequest)
+		return
+	}
+
+	cli := db.GetClient()
+	if cli == nil {
+		fmt.Println("[ListPreviousAttacks] Failed to connect to DB")
+		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
+		return
+	}
+
+	// get a handle for the AttackLog collection
+	attackLogColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackLogCollection)
+
+	// set the query filter to match all attacks sent between startTime and endTime
+	filter := bson.D{
+		{Key: "TriggerTime", Value: bson.D{
+			{Key: "$gte", Value: startTime},
+			{Key: "$lte", Value: endTime},
+		}},
+	}
+
+	// submit the query
+	ctx := context.TODO()
+	cur, err := attackLogColl.Find(ctx, filter)
+	if err != nil {
+		fmt.Printf("[ListPreviousAttacks] Failed to get previous attacks: %+v\n", err)
+		util.JsonResponse(w, "Failed to get previous attacks", http.StatusBadGateway)
+		return
+	}
+
+	defer cur.Close(ctx)
+
+	// decode all the results into a slice
+	allLogs := make([]AttackLogObj, 0)
+	err = cur.All(ctx, &allLogs)
+	if err != nil {
+		fmt.Printf("[ListPreviousAttacks] Failed to decode results: %+v\n", err)
+		util.JsonResponse(w, "Failed to get attack history", http.StatusBadGateway)
+		return
+	}
+
+	fmt.Printf("[ListPreviousAttacks][DEBUG] Succesfully retrieved %d logs.\n", len(allLogs))
+
+	// prepare the response data and return it
+	respData := make(map[string][]AttackLogObj)
+	respData["previousAttacks"] = allLogs
+	util.JsonResponse(w, respData, http.StatusOK)
 }

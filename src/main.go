@@ -25,6 +25,7 @@ func init() {
 
 	// Attack routes
 	router.HandleFunc("/triggerAttack", attacks.TriggerAttacks).Methods(http.MethodPost)
+	router.HandleFunc("/attackHistory", attacks.ListPreviousAttacks).Methods(http.MethodGet)
 }
 
 func main() {

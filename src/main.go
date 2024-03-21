@@ -24,8 +24,9 @@ func init() {
 	router.HandleFunc("/emails/{"+util.URLParameterEmailId+"}", emails.GetAttackEmail).Methods(http.MethodGet)
 
 	// Attack routes
-	router.HandleFunc("/triggerAttack", attacks.TriggerAttacks).Methods(http.MethodPost)
-	router.HandleFunc("/attackHistory", attacks.ListPreviousAttacks).Methods(http.MethodGet)
+	router.HandleFunc("/attacks/trigger", attacks.TriggerAttacks).Methods(http.MethodPost)
+	router.HandleFunc("/attacks/history", attacks.ListPreviousAttacks).Methods(http.MethodGet)
+	router.HandleFunc("/attacks", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
 }
 
 func main() {

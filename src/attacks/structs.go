@@ -8,6 +8,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type AttackDBObj interface {
+	LogAttack(coll *mongo.Collection) (*mongo.InsertOneResult, error)
+}
+
 type RecipientObj struct {
 	Name    string `json:"name" bson:"Name"`
 	Address string `json:"address" bson:"Address"`
@@ -20,6 +24,11 @@ type PendingAttackObj struct {
 	TargetRecipient RecipientObj       `json:"targetRecipient" bson:"TargetRecipient"`
 	TargetUserId    primitive.ObjectID `json:"targetUserId" bson:"TargetUserId"`
 	TriggerTime     time.Time          `json:"triggerTime" bson:"TriggerTime"`
+}
+
+func (pao *PendingAttackObj) LogAttack(pendingAttacksColl *mongo.Collection) (*mongo.InsertOneResult, error) {
+	// insert the object into the PendingAttacks collection
+	return pendingAttacksColl.InsertOne(context.TODO(), pao)
 }
 
 type AttackLogResults struct {

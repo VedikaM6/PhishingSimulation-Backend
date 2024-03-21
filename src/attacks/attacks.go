@@ -2,6 +2,7 @@ package attacks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -179,5 +180,61 @@ func ListPreviousAttacks(w http.ResponseWriter, r *http.Request) {
 	// prepare the response data and return it
 	respData := make(map[string][]AttackLogObj)
 	respData["previousAttacks"] = allLogs
+	util.JsonResponse(w, respData, http.StatusOK)
+}
+
+func ScheduleFutureAttack(w http.ResponseWriter, r *http.Request) {
+	// decode the request data
+	var newAttack PendingAttackObj
+	err := json.NewDecoder(r.Body).Decode(&newAttack)
+	if err != nil {
+		fmt.Printf("[ScheduleFutureAttack] Failed to decode request data: %+v\n", err)
+		util.JsonResponse(w, "Request data is invalid", http.StatusBadRequest)
+		return
+	}
+
+	// validate the attack details
+	validationErr := ""
+	if newAttack.EmailId.IsZero() {
+		// No email was specified for this attack
+		validationErr = "You must specify an email for this attack."
+	} else if newAttack.TargetRecipient.Name == "" || newAttack.TargetRecipient.Address == "" {
+		// Recipient info is missing for this attack
+		validationErr = "Recipient info is missing."
+	} else if newAttack.TargetUserId.IsZero() {
+		// No target user was specified for this attack
+		validationErr = "The targeted user is missing."
+	} else if newAttack.TriggerTime.Before(time.Now()) {
+		// The trigger time is in the past.
+		validationErr = "The trigger time cannot be in the past."
+	}
+
+	if validationErr != "" {
+		util.JsonResponse(w, validationErr, http.StatusBadRequest)
+		return
+	}
+
+	// connect to the database
+	cli := db.GetClient()
+	if cli == nil {
+		fmt.Println("[ScheduleFutureAttack] Failed to connect to DB")
+		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
+		return
+	}
+
+	// get a handle for the PendingAttacks collection
+	pendingAttacksColl := cli.Database(db.VedikaCorpDatabase).Collection(db.PendingAttacksCollection)
+
+	res, err := newAttack.LogAttack(pendingAttacksColl)
+	if err != nil {
+		fmt.Printf("[ScheduleFutureAttack] Failed to insert new attack: %+v\n", err)
+		util.JsonResponse(w, "Failed to schedule attack", http.StatusBadGateway)
+		return
+	}
+
+	// prepare the response data and return it
+	respData := make(map[string]interface{})
+	respData["message"] = "Successfully scheduled attack"
+	respData["attackId"] = res.InsertedID
 	util.JsonResponse(w, respData, http.StatusOK)
 }

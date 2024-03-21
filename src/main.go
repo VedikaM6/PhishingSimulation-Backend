@@ -29,6 +29,7 @@ func init() {
 	router.HandleFunc("/attacks/history", attacks.ListPreviousAttacks).Methods(http.MethodGet)
 	router.HandleFunc("/attacks/now", attacks.TriggerAttackNow).Methods(http.MethodPost)
 	router.HandleFunc("/attacks/future", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
+	router.HandleFunc("/attacks/clicked/{"+util.URLParameterAttackId+"}", attacks.RecordAttackResults).Methods(http.MethodGet)
 }
 
 func main() {

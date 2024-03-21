@@ -9,7 +9,9 @@ import (
 
 	"example.com/m/src/db"
 	"example.com/m/src/util"
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // This function is called when we want to check for any scheduled attacks and trigger them (if they are due).
@@ -252,4 +254,62 @@ func TriggerAttackNow(w http.ResponseWriter, r *http.Request) {
 	respData := make(map[string]interface{})
 	respData["message"] = "Successfully triggered attack"
 	util.JsonResponse(w, respData, http.StatusOK)
+}
+
+// This function is called when a link in an attack email is clicked.
+func RecordAttackResults(w http.ResponseWriter, r *http.Request) {
+	// get the email ID from the URL parameters
+	vars := mux.Vars(r)
+	attackIdHex := vars[util.URLParameterAttackId]
+
+	// check if the emailId is empty
+	if len(attackIdHex) == 0 {
+		fmt.Println("[RecordAttackResults] Attack ID is missing from the request")
+		util.JsonResponse(w, "Request is missing attack ID", http.StatusBadRequest)
+		return
+	}
+
+	// convert the given ObjectID hex into a primitive.ObjectID
+	objId, err := primitive.ObjectIDFromHex(attackIdHex)
+	if err != nil {
+		fmt.Printf("[RecordAttackResults] Failed to convert attack ID: %+v", err)
+		util.JsonResponse(w, "Attack ID is invalid", http.StatusBadRequest)
+		return
+	}
+
+	cli := db.GetClient()
+	if cli == nil {
+		fmt.Println("[RecordAttackResults] Failed to connect to DB")
+		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
+		return
+	}
+
+	// get a handle for the AttackLog collection
+	attackLogColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackLogCollection)
+
+	// set the query filter to match the _id
+	// NOTE: When we execute an attack, we set the _id of the corresponding document in the AttackLog collection as the
+	//       _id of the document in the PendingAttacks collection.
+	filter := bson.D{
+		{Key: "_id", Value: objId},
+	}
+
+	// set the update query
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "Results.IsSuccessful", Value: true},
+			{Key: "Results.ClickTime", Value: time.Now()},
+		}},
+	}
+
+	// submit the query
+	res, err := attackLogColl.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		fmt.Printf("[RecordAttackResults] Failed to record attack results for '%s': %+v\n", objId.Hex(), err)
+		util.JsonResponse(w, map[string]string{"error": "Failed to record attack results"}, http.StatusOK)
+		return
+	}
+
+	fmt.Printf("[RecordAttackResults] Successfully recorded attack results for '%s': %d | %d\n", objId.Hex(), res.MatchedCount, res.ModifiedCount)
+	util.JsonResponse(w, map[string]string{"message": "Successfully recorded attack results"}, http.StatusOK)
 }

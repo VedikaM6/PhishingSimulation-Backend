@@ -8,6 +8,7 @@ import (
 
 const (
 	URLParameterEmailId        = "emailId"
+	URLParameterAttackId       = "attackId"
 	URLQueryParameterStartTime = "startTime"
 	URLQueryParameterEndTime   = "endTime"
 )

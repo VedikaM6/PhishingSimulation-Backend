@@ -39,6 +39,7 @@ func executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl *mongo.Co
 
 	// log the attack in the AttackLog
 	log := AttackLogObj{
+		ObjId:           pendAttack.ObjId,
 		EmailId:         pendAttack.EmailId,
 		TargetRecipient: pendAttack.TargetRecipient,
 		TargetUserId:    pendAttack.TargetUserId,

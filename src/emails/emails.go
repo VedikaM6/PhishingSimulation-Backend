@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// This function is called when we want to get a list of emails from the database.
 func ListEmails(w http.ResponseWriter, r *http.Request) {
 	cli := db.GetClient()
 	if cli == nil {
@@ -53,6 +54,7 @@ func ListEmails(w http.ResponseWriter, r *http.Request) {
 	util.JsonResponse(w, respData, http.StatusOK)
 }
 
+// This endpoint is called when we want to get a specific email from the database.
 func GetAttackEmail(w http.ResponseWriter, r *http.Request) {
 	// get the email ID from the URL parameters
 	vars := mux.Vars(r)

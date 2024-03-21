@@ -8,22 +8,21 @@ import (
 	"time"
 
 	"example.com/m/src/db"
-	"example.com/m/src/emails"
 	"example.com/m/src/util"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 // This function is called when we want to check for any scheduled attacks and trigger them (if they are due).
 // It should be invoked routinely.
-func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
+func TriggerPendingAttacks(w http.ResponseWriter, r *http.Request) {
 	cli := db.GetClient()
 	if cli == nil {
-		fmt.Println("[TriggerAttacks] Failed to connect to DB")
+		fmt.Println("[TriggerPendingAttacks] Failed to connect to DB")
 		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
 		return
 	}
 
-	// get a handle for the PendingAttacks collection
+	// get handles for some collections
 	custDb := cli.Database(db.VedikaCorpDatabase)
 	pendingAttacksColl := custDb.Collection(db.PendingAttacksCollection)
 	attackEmailsColl := custDb.Collection(db.AttackEmailsCollection)
@@ -40,7 +39,7 @@ func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 	ctx := context.TODO()
 	cur, err := pendingAttacksColl.Find(ctx, filter)
 	if err != nil {
-		fmt.Printf("[TriggerAttacks] Failed to get emails from DB: %+v\n", err)
+		fmt.Printf("[TriggerPendingAttacks] Failed to get emails from DB: %+v\n", err)
 		util.JsonResponse(w, "Failed to trigger attacks", http.StatusBadGateway)
 		return
 	}
@@ -51,7 +50,7 @@ func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 	pendingAttacks := make([]PendingAttackObj, 0)
 	err = cur.All(ctx, &pendingAttacks)
 	if err != nil {
-		fmt.Printf("[TriggerAttacks] Failed to decode results: %+v\n", err)
+		fmt.Printf("[TriggerPendingAttacks] Failed to decode results: %+v\n", err)
 		util.JsonResponse(w, "Failed to trigger attacks", http.StatusBadGateway)
 		return
 	}
@@ -68,40 +67,16 @@ func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		// loop through all pending attacks
 		for _, pendAttack := range pendingAttacks {
-			// get the email to send from the DB
-			email, err := emails.GetEmailById(attackEmailsColl, pendAttack.EmailId)
+			// call a helper function to execute the attack
+			err := executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl, pendAttack)
 			if err != nil {
-				fmt.Printf("[TriggerAttacks] Failed to get email with ID '%s': %+v\n", pendAttack.EmailId.Hex(), err)
-				continue
-			}
-
-			// TODO: send email
-			fmt.Printf("[TriggerAttacks] TODO: Send email: %+v\n", email)
-
-			// log the attack in the AttackLog
-			log := AttackLogObj{
-				EmailId:         pendAttack.EmailId,
-				TargetRecipient: pendAttack.TargetRecipient,
-				TargetUserId:    pendAttack.TargetUserId,
-				TriggerTime:     pendAttack.TriggerTime,
-				Results: AttackLogResults{
-					IsSuccessful: false, // The attack only becomes successful if the user clicks on the link in the email.
-					ClickTime:    time.Time{},
-				},
-			}
-			log.LogAttack(attackLogColl)
-
-			// remove the document from the PendingAttacks collection because it has been processed
-			res, err := deletePendingAttack(pendingAttacksColl, pendAttack.ObjId)
-			if err != nil {
-				fmt.Printf("[TriggerAttacks] Failed to remove document '%s': %+v\n", pendAttack.ObjId.Hex(), err)
-			} else {
-				fmt.Printf("[TriggerAttacks] Successfully removed document: %d\n", res.DeletedCount)
+				fmt.Printf("[TriggerPendingAttack] Failed to execute this attack: %+v | %+v\n", pendAttack, err)
 			}
 		}
 	}()
 }
 
+// This function is called when we want to get a list of attacks executed in the past.
 func ListPreviousAttacks(w http.ResponseWriter, r *http.Request) {
 	// get the start and end times to search the history from the URL parameters
 	startTimeStr := r.URL.Query().Get(util.URLQueryParameterStartTime)
@@ -183,6 +158,7 @@ func ListPreviousAttacks(w http.ResponseWriter, r *http.Request) {
 	util.JsonResponse(w, respData, http.StatusOK)
 }
 
+// This function is called when we want to save an attack to be executed at a later date.
 func ScheduleFutureAttack(w http.ResponseWriter, r *http.Request) {
 	// decode the request data
 	var newAttack PendingAttackObj
@@ -236,5 +212,44 @@ func ScheduleFutureAttack(w http.ResponseWriter, r *http.Request) {
 	respData := make(map[string]interface{})
 	respData["message"] = "Successfully scheduled attack"
 	respData["attackId"] = res.InsertedID
+	util.JsonResponse(w, respData, http.StatusOK)
+}
+
+// This function is called when we want to execute an attack immediately (upon the user's request).
+func TriggerAttackNow(w http.ResponseWriter, r *http.Request) {
+	// decode the request data
+	var attack PendingAttackObj
+	err := json.NewDecoder(r.Body).Decode(&attack)
+	if err != nil {
+		fmt.Printf("[TriggerAttackNow] Failed to decode request data: %+v\n", err)
+		util.JsonResponse(w, "Request data is invalid", http.StatusBadRequest)
+		return
+	}
+
+	cli := db.GetClient()
+	if cli == nil {
+		fmt.Println("[TriggerAttackNow] Failed to connect to DB")
+		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
+		return
+	}
+
+	// get handles for some collections
+	custDb := cli.Database(db.VedikaCorpDatabase)
+	pendingAttacksColl := custDb.Collection(db.PendingAttacksCollection)
+	attackEmailsColl := custDb.Collection(db.AttackEmailsCollection)
+	attackLogColl := custDb.Collection(db.AttackLogCollection)
+
+	// execute the attack in a goroutine so we don't have to wait for it
+	go func() {
+		// call a helper function to execute the attack
+		err = executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl, attack)
+		if err != nil {
+			fmt.Printf("[TriggerPendingAttack] Failed to execute this attack: %+v | %+v\n", attack, err)
+		}
+	}()
+
+	// prepare the response data and return it
+	respData := make(map[string]interface{})
+	respData["message"] = "Successfully triggered attack"
 	util.JsonResponse(w, respData, http.StatusOK)
 }

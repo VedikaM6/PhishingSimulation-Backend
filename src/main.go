@@ -25,9 +25,10 @@ func init() {
 	router.HandleFunc("/emails", emails.CreateNewEmail).Methods(http.MethodPut)
 
 	// Attack routes
-	router.HandleFunc("/attacks/trigger", attacks.TriggerAttacks).Methods(http.MethodPost)
+	router.HandleFunc("/attacks/triggerPending", attacks.TriggerPendingAttacks).Methods(http.MethodPost)
 	router.HandleFunc("/attacks/history", attacks.ListPreviousAttacks).Methods(http.MethodGet)
-	router.HandleFunc("/attacks", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
+	router.HandleFunc("/attacks/now", attacks.TriggerAttackNow).Methods(http.MethodPost)
+	router.HandleFunc("/attacks/future", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
 }
 
 func main() {

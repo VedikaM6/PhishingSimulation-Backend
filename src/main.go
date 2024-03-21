@@ -22,6 +22,7 @@ func init() {
 	// Email routes
 	router.HandleFunc("/emails", emails.ListEmails).Methods(http.MethodGet)
 	router.HandleFunc("/emails/{"+util.URLParameterEmailId+"}", emails.GetAttackEmail).Methods(http.MethodGet)
+	router.HandleFunc("/emails", emails.CreateNewEmail).Methods(http.MethodPut)
 
 	// Attack routes
 	router.HandleFunc("/attacks/trigger", attacks.TriggerAttacks).Methods(http.MethodPost)

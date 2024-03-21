@@ -2,6 +2,7 @@ package emails
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -96,4 +97,59 @@ func GetAttackEmail(w http.ResponseWriter, r *http.Request) {
 
 	// return the email
 	util.JsonResponse(w, email, http.StatusOK)
+}
+
+// This endpoint is called when a user wants to create their own custom email.
+func CreateNewEmail(w http.ResponseWriter, r *http.Request) {
+	// decode the request data
+	var newEmail AttackEmailObj
+	err := json.NewDecoder(r.Body).Decode(&newEmail)
+	if err != nil {
+		fmt.Printf("[CreateNewEmail] Failed to decode request data: %+v\n", err)
+		util.JsonResponse(w, "Request data is invalid", http.StatusBadRequest)
+		return
+	}
+
+	// validate the email details
+	validationErr := ""
+	if newEmail.Subject == "" {
+		// No subject was specified for this email
+		validationErr = "You must specify a subject for this email."
+	} else if newEmail.Body == "" {
+		// No body was specified for this email
+		validationErr = "You must specify a body for this email."
+	} else if !newEmail.Id.IsZero() {
+		// The request specifies an _id but it shouldn't do that.
+		validationErr = "Request should not specify _id"
+	}
+
+	if validationErr != "" {
+		util.JsonResponse(w, validationErr, http.StatusBadRequest)
+		return
+	}
+
+	// connect to the database
+	cli := db.GetClient()
+	if cli == nil {
+		fmt.Println("[CreateNewEmail] Failed to connect to DB")
+		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
+		return
+	}
+
+	// get a handle for the AttackEmails collection
+	emailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackEmailsCollection)
+
+	// log the
+	res, err := emailsColl.InsertOne(context.TODO(), newEmail)
+	if err != nil {
+		fmt.Printf("[CreateNewEmail] Failed to insert new email: %+v\n", err)
+		util.JsonResponse(w, "Failed to create email", http.StatusBadGateway)
+		return
+	}
+
+	// prepare the response data and return it
+	respData := make(map[string]interface{})
+	respData["message"] = "Successfully create new email"
+	respData["emailId"] = res.InsertedID
+	util.JsonResponse(w, respData, http.StatusOK)
 }

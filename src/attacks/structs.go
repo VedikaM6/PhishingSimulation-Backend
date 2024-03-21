@@ -1,9 +1,11 @@
 package attacks
 
 import (
+	"context"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type RecipientObj struct {
@@ -17,7 +19,7 @@ type PendingAttackObj struct {
 	EmailId         primitive.ObjectID `json:"emailId" bson:"EmailId,omitempty"`
 	TargetRecipient RecipientObj       `json:"targetRecipient" bson:"TargetRecipient"`
 	TargetUserId    primitive.ObjectID `json:"targetUserId" bson:"TargetUserId"`
-	TriggerTime     time.Time          `json:"attackTime" bson:"AttackTime"`
+	TriggerTime     time.Time          `json:"triggerTime" bson:"TriggerTime"`
 }
 
 type AttackLogResults struct {
@@ -31,6 +33,11 @@ type AttackLogObj struct {
 	EmailId         primitive.ObjectID `json:"emailId" bson:"EmailId,omitempty"`
 	TargetRecipient RecipientObj       `json:"targetRecipient" bson:"TargetRecipient"`
 	TargetUserId    primitive.ObjectID `json:"targetUserId" bson:"TargetUserId"`
-	TriggerTime     time.Time          `json:"attackTime" bson:"AttackTime"`
+	TriggerTime     time.Time          `json:"triggerTime" bson:"TriggerTime"`
 	Results         AttackLogResults   `json:"results" bson:"Results"`
+}
+
+func (alo *AttackLogObj) LogAttack(attackLogColl *mongo.Collection) (*mongo.InsertOneResult, error) {
+	// insert the object into the AttackLog collection
+	return attackLogColl.InsertOne(context.TODO(), alo)
 }

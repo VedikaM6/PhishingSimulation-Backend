@@ -25,6 +25,7 @@ func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 	custDb := cli.Database(db.VedikaCorpDatabase)
 	pendingAttacksColl := custDb.Collection(db.PendingAttacksCollection)
 	attackEmailsColl := custDb.Collection(db.AttackEmailsCollection)
+	attackLogColl := custDb.Collection(db.AttackLogCollection)
 
 	// set the query filter to match all pending attacks with a TriggerTime in the past
 	filter := bson.D{
@@ -74,6 +75,19 @@ func TriggerAttacks(w http.ResponseWriter, r *http.Request) {
 
 			// TODO: send email
 			fmt.Printf("[TriggerAttacks] TODO: Send email: %+v\n", email)
+
+			// log the attack in the AttackLog
+			log := AttackLogObj{
+				EmailId:         pendAttack.EmailId,
+				TargetRecipient: pendAttack.TargetRecipient,
+				TargetUserId:    pendAttack.TargetUserId,
+				TriggerTime:     pendAttack.TriggerTime,
+				Results: AttackLogResults{
+					IsSuccessful: false, // The attack only becomes successful if the user clicks on the link in the email.
+					ClickTime:    time.Time{},
+				},
+			}
+			log.LogAttack(attackLogColl)
 
 			// remove the document from the PendingAttacks collection because it has been processed
 			res, err := deletePendingAttack(pendingAttacksColl, pendAttack.ObjId)

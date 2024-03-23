@@ -27,7 +27,7 @@ func TriggerPendingAttacks(w http.ResponseWriter, r *http.Request) {
 	// get handles for some collections
 	custDb := cli.Database(db.VedikaCorpDatabase)
 	pendingAttacksColl := custDb.Collection(db.PendingAttacksCollection)
-	attackEmailsColl := custDb.Collection(db.AttackEmailsCollection)
+	attackEmailsColl := custDb.Collection(db.EmailsCollection)
 	attackLogColl := custDb.Collection(db.AttackLogCollection)
 
 	// set the query filter to match all pending attacks with a TriggerTime in the past
@@ -238,7 +238,7 @@ func TriggerAttackNow(w http.ResponseWriter, r *http.Request) {
 	// get handles for some collections
 	custDb := cli.Database(db.VedikaCorpDatabase)
 	pendingAttacksColl := custDb.Collection(db.PendingAttacksCollection)
-	attackEmailsColl := custDb.Collection(db.AttackEmailsCollection)
+	attackEmailsColl := custDb.Collection(db.EmailsCollection)
 	attackLogColl := custDb.Collection(db.AttackLogCollection)
 
 	// execute the attack in a goroutine so we don't have to wait for it

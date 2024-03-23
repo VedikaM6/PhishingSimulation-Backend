@@ -13,7 +13,7 @@ const (
 
 	MailboxesCollection      = "Mailboxes"
 	UsersCollection          = "Users"
-	AttackEmailsCollection   = "AttackEmails"
+	EmailsCollection         = "Emails"
 	AttackLogCollection      = "AttackLog"
 	PendingAttacksCollection = "PendingAttacks"
 )

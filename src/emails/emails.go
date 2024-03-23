@@ -23,12 +23,12 @@ func ListEmails(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get a handle for the AttackEmails collection
-	attackEmailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackEmailsCollection)
+	// get a handle for the Emails collection
+	emailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.EmailsCollection)
 
 	// get all users in the collection
 	ctx := context.TODO()
-	cur, err := attackEmailsColl.Find(ctx, bson.D{})
+	cur, err := emailsColl.Find(ctx, bson.D{})
 	if err != nil {
 		fmt.Printf("[ListEmails] Failed to get emails from DB: %+v\n", err)
 		util.JsonResponse(w, "Failed to get emails", http.StatusBadGateway)
@@ -38,31 +38,31 @@ func ListEmails(w http.ResponseWriter, r *http.Request) {
 	defer cur.Close(ctx)
 
 	// decode all the results into a slice
-	allAttackEmails := make([]AttackEmailObj, 0)
-	err = cur.All(ctx, &allAttackEmails)
+	allEmails := make([]EmailObj, 0)
+	err = cur.All(ctx, &allEmails)
 	if err != nil {
 		fmt.Printf("[ListEmails] Failed to decode results: %+v\n", err)
 		util.JsonResponse(w, "Failed to get users", http.StatusBadGateway)
 		return
 	}
 
-	fmt.Printf("[ListEmails][DEBUG] Successfully got %d emails!\n", len(allAttackEmails))
+	fmt.Printf("[ListEmails][DEBUG] Successfully got %d emails!\n", len(allEmails))
 
 	// return the retrieved users
-	respData := make(map[string][]AttackEmailObj)
-	respData["emails"] = allAttackEmails
+	respData := make(map[string][]EmailObj)
+	respData["emails"] = allEmails
 	util.JsonResponse(w, respData, http.StatusOK)
 }
 
 // This endpoint is called when we want to get a specific email from the database.
-func GetAttackEmail(w http.ResponseWriter, r *http.Request) {
+func GetEmail(w http.ResponseWriter, r *http.Request) {
 	// get the email ID from the URL parameters
 	vars := mux.Vars(r)
 	emailIdHex := vars[util.URLParameterEmailId]
 
 	// check if the emailId is empty
 	if len(emailIdHex) == 0 {
-		fmt.Println("[GetAttackEmail] email ID is missing from request")
+		fmt.Println("[GetEmail] email ID is missing from request")
 		util.JsonResponse(w, "Request is missing email ID", http.StatusBadRequest)
 		return
 	}
@@ -70,25 +70,25 @@ func GetAttackEmail(w http.ResponseWriter, r *http.Request) {
 	// convert the given ObjectID hex into a primitive.ObjectID
 	objId, err := primitive.ObjectIDFromHex(emailIdHex)
 	if err != nil {
-		fmt.Printf("[GetAttackEmail] Failed to convert email ID: %+v", err)
+		fmt.Printf("[GetEmail] Failed to convert email ID: %+v", err)
 		util.JsonResponse(w, "Email ID is invalid", http.StatusBadRequest)
 		return
 	}
 
 	cli := db.GetClient()
 	if cli == nil {
-		fmt.Println("[GetAttackEmail] Failed to connect to DB")
+		fmt.Println("[GetEmail] Failed to connect to DB")
 		util.JsonResponse(w, "Failed to connect to DB", http.StatusBadGateway)
 		return
 	}
 
-	// get a handle for the AttackEmails collection
-	attackEmailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackEmailsCollection)
+	// get a handle for the Emails collection
+	emailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.EmailsCollection)
 
 	// get the email from the database
-	email, err := GetEmailById(attackEmailsColl, objId)
+	email, err := GetEmailById(emailsColl, objId)
 	if err != nil {
-		fmt.Printf("[GetAttackEmail] Failed to get email: %+v\n", err)
+		fmt.Printf("[GetEmail] Failed to get email: %+v\n", err)
 		if err == mongo.ErrNoDocuments {
 			util.JsonResponse(w, "The specified email was not found", http.StatusNotFound)
 		} else {
@@ -104,7 +104,7 @@ func GetAttackEmail(w http.ResponseWriter, r *http.Request) {
 // This endpoint is called when a user wants to create their own custom email.
 func CreateNewEmail(w http.ResponseWriter, r *http.Request) {
 	// decode the request data
-	var newEmail AttackEmailObj
+	var newEmail EmailObj
 	err := json.NewDecoder(r.Body).Decode(&newEmail)
 	if err != nil {
 		fmt.Printf("[CreateNewEmail] Failed to decode request data: %+v\n", err)
@@ -138,8 +138,8 @@ func CreateNewEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get a handle for the AttackEmails collection
-	emailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackEmailsCollection)
+	// get a handle for the Emails collection
+	emailsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.EmailsCollection)
 
 	// log the
 	res, err := emailsColl.InsertOne(context.TODO(), newEmail)

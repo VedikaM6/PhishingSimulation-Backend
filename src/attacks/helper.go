@@ -22,13 +22,13 @@ func deletePendingAttack(pendingAttackColl *mongo.Collection, objId primitive.Ob
 }
 
 // This function does the work to 'execute an attack'. It does the following steps:
-// 1. Get the email contents (AttackEmails collection)
+// 1. Get the email contents (Emails collection)
 // 2. Send the email via Microsoft Graph
 // 3. Log the attack (AttackLog collection)
 // 4. Delete the pending attack from the database so we don't execute it again (PEndingAttacks collection)
-func executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl *mongo.Collection, pendAttack PendingAttackObj) error {
+func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collection, pendAttack PendingAttackObj) error {
 	// get the email to send from the DB
-	email, err := emails.GetEmailById(attackEmailsColl, pendAttack.EmailId)
+	email, err := emails.GetEmailById(emailsColl, pendAttack.EmailId)
 	if err != nil {
 		fmt.Printf("[executeAttack] Failed to get email with ID '%s': %+v\n", pendAttack.EmailId.Hex(), err)
 		return err

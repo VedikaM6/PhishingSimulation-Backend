@@ -10,6 +10,7 @@ import (
 	"example.com/m/src/users"
 	"example.com/m/src/util"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 )
 
 var router *mux.Router = mux.NewRouter()
@@ -37,7 +38,15 @@ func main() {
 	db.InitClient()
 	defer db.DisconnectClient()
 
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:8080"},
+		AllowCredentials: true,
+		AllowedMethods: []string{"OPTIONS", "GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Content-Type"},
+	})
+	handler := c.Handler(router)
+
 	fmt.Println("[main] Listening on port 80...")
 
-	http.ListenAndServe(":80", router)
+	http.ListenAndServe(":80", handler)
 }

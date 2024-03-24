@@ -2,7 +2,10 @@ module example.com/m
 
 go 1.22.1
 
-require github.com/gorilla/mux v1.8.1
+require (
+	github.com/gorilla/mux v1.8.1
+	github.com/rs/cors v1.10.1
+)
 
 require github.com/google/go-cmp v0.6.0 // indirect
 

@@ -23,6 +23,7 @@ func JsonResponse(w http.ResponseWriter, data interface{}, statCode int) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.WriteHeader(statCode)
 
 	_, err = w.Write(dataMarsh)

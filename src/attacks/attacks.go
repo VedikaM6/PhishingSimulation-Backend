@@ -81,38 +81,38 @@ func TriggerPendingAttacks(w http.ResponseWriter, r *http.Request) {
 // This function is called when we want to get a list of attacks executed in the past.
 func ListPreviousAttacks(w http.ResponseWriter, r *http.Request) {
 	// get the start and end times to search the history from the URL parameters
-	startTimeStr := r.URL.Query().Get(util.URLQueryParameterStartTime)
-	endTimeStr := r.URL.Query().Get(util.URLQueryParameterEndTime)
+	// startTimeStr := r.URL.Query().Get(util.URLQueryParameterStartTime)
+	// endTimeStr := r.URL.Query().Get(util.URLQueryParameterEndTime)
 
-	// check if the strings are non-empty
-	if startTimeStr == "" || endTimeStr == "" {
-		// One of the times is missing
-		fmt.Printf("[ListPreviousAttacks] The start or end time is missing: %s | %s\n", startTimeStr, endTimeStr)
-		util.JsonResponse(w, "URL query parameters are missing", http.StatusBadRequest)
-		return
-	}
+	// // check if the strings are non-empty
+	// if startTimeStr == "" || endTimeStr == "" {
+	// 	// One of the times is missing
+	// 	fmt.Printf("[ListPreviousAttacks] The start or end time is missing: %s | %s\n", startTimeStr, endTimeStr)
+	// 	util.JsonResponse(w, "URL query parameters are missing", http.StatusBadRequest)
+	// 	return
+	// }
 
-	// convert the time strings to time.Time values
-	startTime, err := time.Parse(time.RFC3339, startTimeStr)
-	if err != nil {
-		fmt.Printf("[ListPreviousAttacks] The start time is invalid: %s | %+v\n", startTimeStr, err)
-		util.JsonResponse(w, "Failed to parse startTime", http.StatusBadRequest)
-		return
-	}
-	endTime, err := time.Parse(time.RFC3339, endTimeStr)
-	if err != nil {
-		fmt.Printf("[ListPreviousAttacks] The end time is invalid: %s | %+v\n", endTimeStr, err)
-		util.JsonResponse(w, "Failed to parse endTime", http.StatusBadRequest)
-		return
-	}
+	// // convert the time strings to time.Time values
+	// startTime, err := time.Parse(time.RFC3339, startTimeStr)
+	// if err != nil {
+	// 	fmt.Printf("[ListPreviousAttacks] The start time is invalid: %s | %+v\n", startTimeStr, err)
+	// 	util.JsonResponse(w, "Failed to parse startTime", http.StatusBadRequest)
+	// 	return
+	// }
+	// endTime, err := time.Parse(time.RFC3339, endTimeStr)
+	// if err != nil {
+	// 	fmt.Printf("[ListPreviousAttacks] The end time is invalid: %s | %+v\n", endTimeStr, err)
+	// 	util.JsonResponse(w, "Failed to parse endTime", http.StatusBadRequest)
+	// 	return
+	// }
 
-	// validate times
-	if !startTime.Before(endTime) {
-		// The start time is on or after the end time.
-		fmt.Printf("[ListPreviousAttacks] The start time must be before the end time: %s | %s\n", startTimeStr, endTimeStr)
-		util.JsonResponse(w, "The start time must be before the end time.", http.StatusBadRequest)
-		return
-	}
+	// // validate times
+	// if !startTime.Before(endTime) {
+	// 	// The start time is on or after the end time.
+	// 	fmt.Printf("[ListPreviousAttacks] The start time must be before the end time: %s | %s\n", startTimeStr, endTimeStr)
+	// 	util.JsonResponse(w, "The start time must be before the end time.", http.StatusBadRequest)
+	// 	return
+	// }
 
 	cli := db.GetClient()
 	if cli == nil {
@@ -126,10 +126,10 @@ func ListPreviousAttacks(w http.ResponseWriter, r *http.Request) {
 
 	// set the query filter to match all attacks sent between startTime and endTime
 	filter := bson.D{
-		{Key: "TriggerTime", Value: bson.D{
-			{Key: "$gte", Value: startTime},
-			{Key: "$lte", Value: endTime},
-		}},
+		// {Key: "TriggerTime", Value: bson.D{
+		// 	{Key: "$gte", Value: startTime},
+		// 	{Key: "$lte", Value: endTime},
+		// }},
 	}
 
 	// submit the query

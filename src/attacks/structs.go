@@ -13,9 +13,10 @@ type AttackDBObj interface {
 }
 
 type RecipientObj struct {
-	Name      string `json:"name" bson:"Name"`
-	Address   string `json:"address" bson:"Address"`
-	IsClicked bool   `json:"isClicked" bson:"IsClicked"`
+	Name        string    `json:"name" bson:"Name"`
+	Address     string    `json:"address" bson:"Address"`
+	IsClicked   bool      `json:"isClicked" bson:"IsClicked"`
+	ClickedTime time.Time `json:"clickedTime" bson:"ClickedTime"`
 }
 
 // Represents documents in the PendingAttacks collection

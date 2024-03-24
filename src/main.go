@@ -30,7 +30,7 @@ func init() {
 	router.HandleFunc("/attacks/history", attacks.ListPreviousAttacks).Methods(http.MethodGet)
 	router.HandleFunc("/attacks/now", attacks.TriggerAttackNow).Methods(http.MethodPost)
 	router.HandleFunc("/attacks/future", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
-	router.HandleFunc("/attacks/clicked/{"+util.URLParameterAttackId+"}", attacks.RecordAttackResults).Methods(http.MethodGet)
+	router.HandleFunc("/attacks/clicked/{"+util.URLParameterAttackId+"}/{"+util.URLParameterUserEmail+"}", attacks.RecordAttackResults).Methods(http.MethodGet)
 }
 
 func main() {
@@ -39,10 +39,10 @@ func main() {
 	defer db.DisconnectClient()
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:8080"},
+		AllowedOrigins:   []string{"http://localhost:8080"},
 		AllowCredentials: true,
-		AllowedMethods: []string{"OPTIONS", "GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedMethods:   []string{"OPTIONS", "GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Content-Type"},
 	})
 	handler := c.Handler(router)
 

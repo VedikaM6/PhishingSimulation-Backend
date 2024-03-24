@@ -275,8 +275,9 @@ func RecordAttackResults(w http.ResponseWriter, r *http.Request) {
 	// get the email ID from the URL parameters
 	vars := mux.Vars(r)
 	attackIdHex := vars[util.URLParameterAttackId]
+	userEmail := vars[util.URLParameterUserEmail]
 
-	// check if the emailId is empty
+	// check if the attackId is empty
 	if len(attackIdHex) == 0 {
 		fmt.Println("[RecordAttackResults] Attack ID is missing from the request")
 		util.JsonResponse(w, "Request is missing attack ID", http.StatusBadRequest)
@@ -284,10 +285,17 @@ func RecordAttackResults(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// convert the given ObjectID hex into a primitive.ObjectID
-	objId, err := primitive.ObjectIDFromHex(attackIdHex)
+	attackObjId, err := primitive.ObjectIDFromHex(attackIdHex)
 	if err != nil {
 		fmt.Printf("[RecordAttackResults] Failed to convert attack ID: %+v", err)
 		util.JsonResponse(w, "Attack ID is invalid", http.StatusBadRequest)
+		return
+	}
+
+	// check if the userId is empty
+	if len(userEmail) == 0 {
+		fmt.Println("[RecordAttackResults] User email is missing from the request")
+		util.JsonResponse(w, "Request is missing user email", http.StatusBadRequest)
 		return
 	}
 
@@ -305,25 +313,26 @@ func RecordAttackResults(w http.ResponseWriter, r *http.Request) {
 	// NOTE: When we execute an attack, we set the _id of the corresponding document in the AttackLog collection as the
 	//       _id of the document in the PendingAttacks collection.
 	filter := bson.D{
-		{Key: "_id", Value: objId},
+		{Key: "_id", Value: attackObjId},
+		{Key: "TargetRecipients.Address", Value: userEmail},
 	}
 
 	// set the update query
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "Results.IsSuccessful", Value: true},
-			{Key: "Results.ClickTime", Value: time.Now()},
+			{Key: "TargetRecipients.$.IsClicked", Value: true},
+			{Key: "TargetRecipients.$.ClickedTime", Value: time.Now()},
 		}},
 	}
 
 	// submit the query
 	res, err := attackLogColl.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
-		fmt.Printf("[RecordAttackResults] Failed to record attack results for '%s': %+v\n", objId.Hex(), err)
+		fmt.Printf("[RecordAttackResults] Failed to record attack results for '%s': %+v\n", attackObjId.Hex(), err)
 		util.JsonResponse(w, map[string]string{"error": "Failed to record attack results"}, http.StatusOK)
 		return
 	}
 
-	fmt.Printf("[RecordAttackResults] Successfully recorded attack results for '%s': %d | %d\n", objId.Hex(), res.MatchedCount, res.ModifiedCount)
+	fmt.Printf("[RecordAttackResults] Successfully recorded attack results for '%s': %d | %d\n", attackObjId.Hex(), res.MatchedCount, res.ModifiedCount)
 	util.JsonResponse(w, map[string]string{"message": "Successfully recorded attack results"}, http.StatusOK)
 }

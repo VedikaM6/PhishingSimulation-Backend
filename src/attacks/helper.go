@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"example.com/m/src/agents"
 	"example.com/m/src/emails"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -34,8 +35,12 @@ func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collecti
 		return err
 	}
 
-	// TODO: send email
-	fmt.Printf("[executeAttack] TODO: Send email: %+v\n", email)
+	// send the email
+	err = agents.SendEmailWithRandomAgent(email, pendAttack.TargetRecipient.Address)
+	if err != nil {
+		fmt.Printf("[executeAttack] Failed to send email '%s': %+v\n", pendAttack.EmailId.Hex(), err)
+		// TODO: Don't return here because we still need to implement the access token, so this will always fail.
+	}
 
 	// log the attack in the AttackLog
 	log := AttackLogObj{

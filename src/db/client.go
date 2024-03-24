@@ -16,6 +16,7 @@ const (
 	EmailsCollection         = "Emails"
 	AttackLogCollection      = "AttackLog"
 	PendingAttacksCollection = "PendingAttacks"
+	AgentsCollection         = "Agents"
 )
 
 var client *mongo.Client

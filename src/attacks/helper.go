@@ -36,25 +36,18 @@ func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collecti
 	}
 
 	// send the email
-	err = agents.SendEmailWithRandomAgent(email, pendAttack.TargetRecipient.Address)
-	if err != nil {
-		fmt.Printf("[executeAttack] Failed to send email '%s': %+v\n", pendAttack.EmailId.Hex(), err)
-		// TODO: Don't return here because we still need to implement the access token, so this will always fail.
+	for _, recip := range pendAttack.TargetRecipients {
+		err = agents.SendEmailWithRandomAgent(email, recip.Address)
+		if err != nil {
+			fmt.Printf("[executeAttack] Failed to send email '%s': %+v\n", pendAttack.EmailId.Hex(), err)
+			// TODO: Don't return here because we still need to implement the access token, so this will always fail.
+		}
+
+		time.Sleep(time.Millisecond * 50)
 	}
 
 	// log the attack in the AttackLog
-	log := AttackLogObj{
-		ObjId:           pendAttack.ObjId,
-		EmailId:         pendAttack.EmailId,
-		TargetRecipient: pendAttack.TargetRecipient,
-		TargetUserId:    pendAttack.TargetUserId,
-		TriggerTime:     pendAttack.TriggerTime,
-		Results: AttackLogResults{
-			IsSuccessful: false, // The attack only becomes successful if the user clicks on the link in the email.
-			ClickTime:    time.Time{},
-		},
-	}
-	_, err = log.LogAttack(attackLogColl)
+	_, err = pendAttack.LogAttack(attackLogColl)
 	if err != nil {
 		fmt.Printf("[executeAttack] Failed to log attack '%s': %+v\n", pendAttack.ObjId.Hex(), err)
 		return err

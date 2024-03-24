@@ -171,22 +171,36 @@ func ScheduleFutureAttack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// validate the attack details
+	// validate the general attack details
 	validationErr := ""
 	if newAttack.EmailId.IsZero() {
 		// No email was specified for this attack
 		validationErr = "You must specify an email for this attack."
-	} else if newAttack.TargetRecipient.Name == "" || newAttack.TargetRecipient.Address == "" {
-		// Recipient info is missing for this attack
-		validationErr = "Recipient info is missing."
-	} else if newAttack.TargetUserId.IsZero() {
-		// No target user was specified for this attack
-		validationErr = "The targeted user is missing."
 	} else if newAttack.TriggerTime.Before(time.Now()) {
 		// The trigger time is in the past.
 		validationErr = "The trigger time cannot be in the past."
 	}
 
+	// validate the target recipient details
+	if len(newAttack.TargetRecipients) != len(newAttack.TargetUserIds) {
+		// The number of recipients does not match the number of userIds, this request is invalid.
+		validationErr = "The specified recipients don't match the IDs."
+	} else {
+		for i := 0; i < len(newAttack.TargetRecipients); i++ {
+			if newAttack.TargetRecipients[i].Name == "" || newAttack.TargetRecipients[i].Address == "" {
+				// Recipient info is missing for this attack
+				validationErr = "Recipient info is missing."
+				break
+
+			} else if newAttack.TargetUserIds[i].IsZero() {
+				// No target user was specified for this attack
+				validationErr = "The targeted user is missing."
+				break
+			}
+		}
+	}
+
+	// Check if any validation errors occurred
 	if validationErr != "" {
 		util.JsonResponse(w, validationErr, http.StatusBadRequest)
 		return
@@ -203,7 +217,7 @@ func ScheduleFutureAttack(w http.ResponseWriter, r *http.Request) {
 	// get a handle for the PendingAttacks collection
 	pendingAttacksColl := cli.Database(db.VedikaCorpDatabase).Collection(db.PendingAttacksCollection)
 
-	res, err := newAttack.LogAttack(pendingAttacksColl)
+	res, err := newAttack.CreateAttack(pendingAttacksColl)
 	if err != nil {
 		fmt.Printf("[ScheduleFutureAttack] Failed to insert new attack: %+v\n", err)
 		util.JsonResponse(w, "Failed to schedule attack", http.StatusBadGateway)

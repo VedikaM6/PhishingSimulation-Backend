@@ -256,13 +256,13 @@ func TriggerAttackNow(w http.ResponseWriter, r *http.Request) {
 	attackLogColl := custDb.Collection(db.AttackLogCollection)
 
 	// execute the attack in a goroutine so we don't have to wait for it
-	go func() {
-		// call a helper function to execute the attack
-		err = executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl, attack)
-		if err != nil {
-			fmt.Printf("[TriggerPendingAttack] Failed to execute this attack: %+v | %+v\n", attack, err)
-		}
-	}()
+	// call a helper function to execute the attack
+	err = executeAttack(attackEmailsColl, attackLogColl, pendingAttacksColl, attack)
+	if err != nil {
+		fmt.Printf("[TriggerPendingAttack] Failed to execute this attack: %+v | %+v\n", attack, err)
+		util.JsonResponse(w, "Failed to execute this attack", http.StatusBadGateway)
+		return
+	}
 
 	// prepare the response data and return it
 	respData := make(map[string]interface{})

@@ -40,20 +40,38 @@ type AttackLogResults struct {
 	ClickTime    time.Time `json:"clickTime" bson:"ClickTime"`
 }
 
+// An object used to indicate which email was used in an attack
+type UsedEmailObj struct {
+	Id   primitive.ObjectID `json:"_id" bson:"_id"`
+	Name string             `json:"name" bson:"Name"`
+}
+
 // Represents documents in the AttackLog collection. It contains info about an attack that was executed.
 type AttackLogObj struct {
 	ObjId            primitive.ObjectID   `json:"_id" bson:"_id,omitempty"`
 	Name             string               `json:"name" bson:"Name"`
 	Description      string               `json:"description" bson:"Description"`
-	EmailId          primitive.ObjectID   `json:"emailId" bson:"EmailId,omitempty"`
+	UsedEmail        UsedEmailObj         `json:"usedEmail" bson:"UsedEmail,omitempty"`
 	TargetRecipients []RecipientObj       `json:"targetRecipients" bson:"TargetRecipients"`
 	TargetUserIds    []primitive.ObjectID `json:"targetUserIds" bson:"TargetUserIds"`
 	TriggerTime      time.Time            `json:"triggerTime" bson:"TriggerTime"`
 }
 
-func (pao *PendingAttackObj) LogAttack(attackLogColl *mongo.Collection) (*mongo.InsertOneResult, error) {
+func (pao *PendingAttackObj) LogAttack(attackLogColl *mongo.Collection, emailTemplateName string) (*mongo.InsertOneResult, error) {
 	// insert the object into the AttackLog collection
-	return attackLogColl.InsertOne(context.TODO(), pao)
+	alo := AttackLogObj{
+		Name:        pao.Name,
+		Description: pao.Description,
+		UsedEmail: UsedEmailObj{
+			Id:   pao.EmailId,
+			Name: emailTemplateName,
+		},
+		TargetRecipients: pao.TargetRecipients,
+		TargetUserIds:    pao.TargetUserIds,
+		TriggerTime:      pao.TriggerTime,
+	}
+
+	return alo.LogAttack(attackLogColl)
 }
 
 func (alo *AttackLogObj) LogAttack(attackLogColl *mongo.Collection) (*mongo.InsertOneResult, error) {

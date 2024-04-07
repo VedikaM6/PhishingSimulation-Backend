@@ -47,7 +47,7 @@ func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collecti
 	}
 
 	// log the attack in the AttackLog
-	_, err = pendAttack.LogAttack(attackLogColl)
+	_, err = pendAttack.LogAttack(attackLogColl, email.Name)
 	if err != nil {
 		fmt.Printf("[executeAttack] Failed to log attack '%s': %+v\n", pendAttack.ObjId.Hex(), err)
 		return err

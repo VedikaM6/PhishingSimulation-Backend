@@ -3,6 +3,7 @@ package attacks
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"example.com/m/src/agents"
@@ -35,12 +36,17 @@ func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collecti
 		return err
 	}
 
+	// replace all \n with <br/>
+	email.Body = strings.ReplaceAll(email.Body, "\n", "<br/>")
+
 	// send the email
 	for _, recip := range pendAttack.TargetRecipients {
 		err = agents.SendEmailWithRandomAgent(email, recip.Address)
 		if err != nil {
 			fmt.Printf("[executeAttack] Failed to send email '%s': %+v\n", pendAttack.EmailId.Hex(), err)
 			// TODO: Don't return here because we still need to implement the access token, so this will always fail.
+		} else {
+			fmt.Printf("[executeAttack][DEBUG] Successfully sent email '%s' to '%s'\n", pendAttack.EmailId.Hex(), recip.Address)
 		}
 
 		time.Sleep(time.Millisecond * 50)

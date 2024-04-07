@@ -27,7 +27,9 @@ func getRandomAgent() (AgentObj, error) {
 	// create an aggregation pipeline to get a random document
 	aggPipeline := bson.A{
 		bson.D{
-			{Key: "$sample", Value: 1},
+			{Key: "$sample", Value: bson.D{
+				{Key: "size", Value: 1},
+			}},
 		},
 	}
 
@@ -71,6 +73,9 @@ func SendEmailWithRandomAgent(email emails.EmailObj, recipient string) error {
 	if err != nil {
 		fmt.Printf("[SendEmailWithRandomAgent][%s] Failed to send email: %d | %+v\n", recipient, statCode, err)
 		return err
+	} else if statCode != http.StatusAccepted {
+		fmt.Printf("[SendEmailWithRandomAgent][%s] Request failed with status code: %d\n", recipient, statCode)
+		return fmt.Errorf("request failed with status code %d", statCode)
 	}
 
 	return nil

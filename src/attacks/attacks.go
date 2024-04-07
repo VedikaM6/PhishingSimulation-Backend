@@ -242,6 +242,9 @@ func TriggerAttackNow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// initialize the _id for this attack
+	attack.ObjId = primitive.NewObjectID()
+
 	cli := db.GetClient()
 	if cli == nil {
 		fmt.Println("[TriggerAttackNow] Failed to connect to DB")

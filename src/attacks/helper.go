@@ -3,6 +3,7 @@ package attacks
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -39,8 +40,14 @@ func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collecti
 	// replace all \n with <br/>
 	email.Body = strings.ReplaceAll(email.Body, "\n", "<br/>")
 
+	// take a copy of the email body while it still contains the placeholder
+	emailBodyWithPlaceholder := email.Body
+
 	// send the email
 	for _, recip := range pendAttack.TargetRecipients {
+		// replace the phishing link placeholder with an <a> tag
+		email.Body = insertPhishingAnchorTag(emailBodyWithPlaceholder, getPhishingLink(pendAttack.ObjId.Hex(), recip.Address))
+
 		err = agents.SendEmailWithRandomAgent(email, recip.Address)
 		if err != nil {
 			fmt.Printf("[executeAttack] Failed to send email '%s': %+v\n", pendAttack.EmailId.Hex(), err)
@@ -69,4 +76,29 @@ func executeAttack(emailsColl, attackLogColl, pendingAttacksColl *mongo.Collecti
 	}
 
 	return nil
+}
+
+// Generate the phishing link with the given details
+func getPhishingLink(attackId, userEmail string) string {
+	return fmt.Sprintf("http://localhost:80/attacks/clicked/%s/%s", attackId, userEmail)
+}
+
+// Find and replace the placeholder for the phishing link in the email content
+func insertPhishingAnchorTag(emailBody string, phishingLink string) string {
+	// create a Regexp object
+	regexObj, err := regexp.Compile(`\[\[[A-Za-z]+\]\]`)
+	if err != nil {
+		fmt.Printf("[InsertPhishingAnchorTag] Failed to compile regex pattern: %+v", err)
+		return emailBody
+	}
+
+	// create the anchor tag text
+	indexOfOpenDoubleBrackets := strings.Index(emailBody, "[[")
+	indexOfCloseDoubleBrackets := strings.Index(emailBody, "]]")
+	linkText := emailBody[indexOfOpenDoubleBrackets+2 : indexOfCloseDoubleBrackets]
+	anchorTagText := fmt.Sprintf("<a href=\"%s\">%s</a>", phishingLink, linkText)
+
+	// replace all instances of the placeholder with the anchor tag
+	return regexObj.ReplaceAllString(emailBody, anchorTagText)
+
 }

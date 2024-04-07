@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -337,5 +338,20 @@ func RecordAttackResults(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Printf("[RecordAttackResults] Successfully recorded attack results for '%s': %d | %d\n", attackObjId.Hex(), res.MatchedCount, res.ModifiedCount)
-	util.JsonResponse(w, map[string]string{"message": "Successfully recorded attack results"}, http.StatusOK)
+	//util.JsonResponse(w, map[string]string{"message": "Successfully recorded attack results"}, http.StatusOK)
+
+	// Display the webpage to the user
+	tmpl, err := template.New("attack-clicked.html").ParseFiles("static/attack-clicked.html")
+	if err != nil {
+		fmt.Printf("[RecordAttackResults] Failed to parse files: %+v", err)
+		util.JsonResponse(w, map[string]string{"message": "Successfully recorded attack results"}, http.StatusOK)
+		return
+	}
+
+	err = tmpl.Execute(w, nil)
+	if err != nil {
+		fmt.Printf("[RecordAttackResults] Failed to execute template: %+v", err)
+		util.JsonResponse(w, map[string]string{"message": "Successfully recorded attack results"}, http.StatusOK)
+		return
+	}
 }

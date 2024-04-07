@@ -31,6 +31,10 @@ func init() {
 	router.HandleFunc("/attacks/now", attacks.TriggerAttackNow).Methods(http.MethodPost)
 	router.HandleFunc("/attacks/future", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
 	router.HandleFunc("/attacks/clicked/{"+util.URLParameterAttackId+"}/{"+util.URLParameterUserEmail+"}", attacks.RecordAttackResults).Methods(http.MethodGet)
+
+	// webpage routes
+	// fs := http.FileServer(http.Dir("./static"))
+	// router.Handle("/vedikacorp", fs)
 }
 
 func main() {

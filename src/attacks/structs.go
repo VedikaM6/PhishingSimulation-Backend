@@ -60,6 +60,7 @@ type AttackLogObj struct {
 func (pao *PendingAttackObj) LogAttack(attackLogColl *mongo.Collection, emailTemplateName string) (*mongo.InsertOneResult, error) {
 	// insert the object into the AttackLog collection
 	alo := AttackLogObj{
+		ObjId:       pao.ObjId,
 		Name:        pao.Name,
 		Description: pao.Description,
 		UsedEmail: UsedEmailObj{

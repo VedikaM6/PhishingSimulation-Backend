@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"example.com/m/src/attacks"
+	"example.com/m/src/dashboard"
 	"example.com/m/src/db"
 	"example.com/m/src/emails"
 	"example.com/m/src/users"
@@ -31,6 +32,9 @@ func init() {
 	router.HandleFunc("/attacks/now", attacks.TriggerAttackNow).Methods(http.MethodPost)
 	router.HandleFunc("/attacks/future", attacks.ScheduleFutureAttack).Methods(http.MethodPut)
 	router.HandleFunc("/attacks/clicked/{"+util.URLParameterAttackId+"}/{"+util.URLParameterUserEmail+"}", attacks.RecordAttackResults).Methods(http.MethodGet)
+
+	// Report routes
+	router.HandleFunc("/dashboard/data", dashboard.GetGaugeData).Methods(http.MethodGet)
 
 	// webpage routes
 	// fs := http.FileServer(http.Dir("./static"))

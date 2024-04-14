@@ -21,8 +21,9 @@ func GetGaugeData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get a handle for the AttackLog collection
+	// get a handle for the AttackLog and PendingAttacks collections
 	logsColl := cli.Database(db.VedikaCorpDatabase).Collection(db.AttackLogCollection)
+	pendAttackColl := cli.Database(db.VedikaCorpDatabase).Collection(db.PendingAttacksCollection)
 
 	// create an object for the response data
 	respData := dashboardDataResponseObj{
@@ -58,6 +59,36 @@ func GetGaugeData(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		respData.AllGaugeData = append(respData.AllGaugeData, emailCountsData)
+	}
+
+	// ----- TeamPerfLastWeekGauge -----
+	lastWeekTeamPerf, err := AggregateTeamPerfLastWeekData(logsColl)
+	if err != nil {
+		fmt.Printf("[GetGaugeData][TeamPerfLastWeekGauge] Failed to aggregate data: %+v", err)
+		util.JsonResponse(w, "Failed to get data", http.StatusBadGateway)
+		return
+	} else {
+		respData.AllGaugeData = append(respData.AllGaugeData, lastWeekTeamPerf)
+	}
+
+	// ----- ScheduledAttacksNextWeek -----
+	schedAttackNextWeek, err := AggregateScheduledAttacksData(pendAttackColl)
+	if err != nil {
+		fmt.Printf("[GetGaugeData][ScheduledAttacksNextWeek] Failed to aggregate data: %+v", err)
+		util.JsonResponse(w, "Failed to get data", http.StatusBadGateway)
+		return
+	} else {
+		respData.AllGaugeData = append(respData.AllGaugeData, schedAttackNextWeek)
+	}
+
+	// ----- ScheduledAttacksNextWeek -----
+	schedAttackByUser, err := AggregateScheduledAttacksForUsersData(pendAttackColl)
+	if err != nil {
+		fmt.Printf("[GetGaugeData][ScheduledAttacksNextWeek] Failed to aggregate data: %+v", err)
+		util.JsonResponse(w, "Failed to get data", http.StatusBadGateway)
+		return
+	} else {
+		respData.AllGaugeData = append(respData.AllGaugeData, schedAttackByUser)
 	}
 
 	util.JsonResponse(w, respData, http.StatusOK)

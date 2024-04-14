@@ -3,9 +3,12 @@ package dashboard
 type GaugeType string
 
 const (
-	UserCountsGauge      = "UserCounts"
-	TeamTotalPerformance = "TotalTeamPerformance"
-	EmailCountsGauge     = "EmailCounts"
+	UserCountsGauge          = "UserCounts"
+	TeamTotalPerformance     = "TotalTeamPerformance"
+	EmailCountsGauge         = "EmailCounts"
+	TeamPerformanceLastWeek  = "TeamPerformanceLastWeek"
+	ScheduledAttacksNextWeek = "ScheduledAttacksNextWeek"
+	ScheduledAttacksForUsers = "ScheduledAttacksForUsers"
 )
 
 // Represents data for all gauge types

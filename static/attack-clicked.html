@@ -5,11 +5,54 @@
   <meta charset="utf-8">
   <title>Gotcha!</title>
   <link rel="stylesheet" href="./css/main.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+  <style>
+    /* Center the card */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  </style>
 </head>
 
 <body>
-  <h1 id="page-title">You done messed up. I have all your info.</h1>
-  <p class="description">You clicked on a link in an unsafe email and now you're here.</p>
+  <div class="container">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Gotcha!</h5>
+        <p class="card-text">
+        <p>You've fallen for a phishing attack and clicked on an unsafe link.</p>
+
+        <p>
+          Phishing emails often appear legitimate but aim to deceive you into sharing sensitive information
+          or clicking malicious links. One way to spot them is by carefully examining the sender's email
+          address. Check for misspellings or unusual domains that don't match the organization they claim
+          to represent. Additionally, watch out for urgent requests for personal or financial information,
+          especially if they threaten consequences for not complying quickly. Legitimate companies typically
+          won't ask for sensitive information via email.
+        </p>
+
+        <p>
+          Another red flag is poorly written or overly generic content. Phishing emails often contain
+          grammatical errors, vague greetings, or generic language that doesn't match the usual tone of
+          communication from the supposed sender. Be cautious of unexpected attachments or links, especially
+          if they prompt you to log in to an account or provide personal details. When in doubt, contact the
+          organization directly through their official website or customer service channels to verify the
+          authenticity of the email.
+        </p>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (optional, for some components) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 </body>
 
 </html>

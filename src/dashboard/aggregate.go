@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -87,6 +88,11 @@ func AggregateUserCountsData(logsColl *mongo.Collection) (GaugeData, error) {
 	if cur.Err() != nil {
 		fmt.Printf("[AggregateUserCountsData] A Mongo cursor error occurred!: %+v", cur.Err())
 	}
+
+	// sort allResults by user names
+	sort.Slice(allResults, func(i, j int) bool {
+		return allResults[i].UserName < allResults[j].UserName
+	})
 
 	// add 'allResults' to 'gData'
 	gData.Data = allResults
@@ -252,6 +258,11 @@ func AggregateEmailCountsData(logsColl *mongo.Collection) (GaugeData, error) {
 		fmt.Printf("[AggregateEmailCountsData] A Mongo cursor error occurred!: %+v", cur.Err())
 	}
 
+	// sort allResults by email names
+	sort.Slice(allResults, func(i, j int) bool {
+		return allResults[i].EmailName < allResults[j].EmailName
+	})
+
 	// add 'allResults' to 'gData'
 	gData.Data = allResults
 
@@ -360,6 +371,30 @@ func AggregateTeamPerfLastWeekData(logsColl *mongo.Collection) (GaugeData, error
 		allResults = append(allResults, currDoc)
 	}
 
+	// sort allResults by date
+	sort.Slice(allResults, func(i, j int) bool {
+		// Compare years
+		if allResults[i].Id.Year < allResults[j].Id.Year {
+			return true
+		} else if allResults[i].Id.Year > allResults[j].Id.Year {
+			return false
+		}
+
+		// Compare months
+		if allResults[i].Id.Month < allResults[j].Id.Month {
+			return true
+		} else if allResults[i].Id.Month > allResults[j].Id.Month {
+			return false
+		}
+
+		// Compare days
+		if allResults[i].Id.Day < allResults[j].Id.Day {
+			return true
+		} else {
+			return false
+		}
+	})
+
 	// set the gauge data
 	gData.Data = allResults
 
@@ -456,6 +491,30 @@ func AggregateScheduledAttacksData(pendAttackColl *mongo.Collection) (GaugeData,
 		allResults = append(allResults, currDoc)
 	}
 
+	// sort allResults by date
+	sort.Slice(allResults, func(i, j int) bool {
+		// Compare years
+		if allResults[i].Id.Year < allResults[j].Id.Year {
+			return true
+		} else if allResults[i].Id.Year > allResults[j].Id.Year {
+			return false
+		}
+
+		// Compare months
+		if allResults[i].Id.Month < allResults[j].Id.Month {
+			return true
+		} else if allResults[i].Id.Month > allResults[j].Id.Month {
+			return false
+		}
+
+		// Compare days
+		if allResults[i].Id.Day < allResults[j].Id.Day {
+			return true
+		} else {
+			return false
+		}
+	})
+
 	// set the gauge data
 	gData.Data = allResults
 
@@ -524,6 +583,11 @@ func AggregateScheduledAttacksForUsersData(pendAttackColl *mongo.Collection) (Ga
 		// add the current doc to 'allResults'
 		allResults = append(allResults, currDoc)
 	}
+
+	// sort allResults by user names
+	sort.Slice(allResults, func(i, j int) bool {
+		return allResults[i].Id < allResults[j].Id
+	})
 
 	// set the gauge data
 	gData.Data = allResults
